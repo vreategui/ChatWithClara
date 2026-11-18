@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Chat with Clara",
+    "slug": "mum-english-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#fdf6ec"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.family.chatwithclara",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Clara needs the microphone so you can talk to her during your daily chat."
+      }
+    },
+    "plugins": ["expo-notifications"]
+  }
+}
