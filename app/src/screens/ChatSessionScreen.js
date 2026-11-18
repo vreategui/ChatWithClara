@@ -8,7 +8,13 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { Audio } from "expo-av";
+import {
+  useAudioRecorder,
+  useAudioRecorderState,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from "expo-audio";
 import * as Speech from "expo-speech";
 import { startSession, sendTurn } from "../api";
 
@@ -26,19 +32,22 @@ function Bubble({ from, text }) {
 export default function ChatSessionScreen({ navigation }) {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isRecording, setIsRecording] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [starting, setStarting] = useState(true);
-  const recordingRef = useRef(null);
   const scrollRef = useRef(null);
+
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder);
+  const isRecording = recorderState.isRecording;
 
   useEffect(() => {
     (async () => {
       try {
-        const { status } = await Audio.requestPermissionsAsync();
-        if (status !== "granted") {
+        const { granted } = await requestRecordingPermissionsAsync();
+        if (!granted) {
           Alert.alert("Microphone needed", "Clara needs the microphone to hear you.");
         }
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
         const result = await startSession();
         setSessionId(result.sessionId);
         const opener = `Hi! Today let's chat about: ${result.topic.title.toLowerCase()}. Ready whenever you are — just tap the button and talk to me like you normally would.`;
@@ -66,24 +75,18 @@ export default function ChatSessionScreen({ navigation }) {
 
   async function startRecording() {
     try {
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      recordingRef.current = recording;
-      setIsRecording(true);
+      await recorder.prepareToRecordAsync();
+      recorder.record();
     } catch (e) {
       Alert.alert("Recording error", "Couldn't start recording. Please try again.");
     }
   }
 
   async function stopRecordingAndSend() {
-    setIsRecording(false);
-    const recording = recordingRef.current;
-    if (!recording) return;
-    recordingRef.current = null;
-
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await recorder.stop();
+      const uri = recorder.uri;
+      if (!uri) throw new Error("No recording captured");
       setIsThinking(true);
       const { userText, replyText } = await sendTurn(sessionId, uri);
       addHerMessage(userText);
