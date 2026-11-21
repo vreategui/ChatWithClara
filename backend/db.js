@@ -4,8 +4,14 @@
 
 const Database = require("better-sqlite3");
 const path = require("path");
+const fs = require("fs");
 
-const db = new Database(path.join(__dirname, "data", "app.db"));
+// git doesn't track empty folders, so on a fresh clone (like Render's build)
+// this "data" folder won't exist yet — create it if needed before opening the db.
+const dataDir = path.join(__dirname, "data");
+fs.mkdirSync(dataDir, { recursive: true });
+
+const db = new Database(path.join(dataDir, "app.db"));
 db.pragma("journal_mode = WAL");
 
 db.exec(`
