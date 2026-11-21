@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // wifi network as your computer, this is usually your computer's local IP,
 // e.g. "http://192.168.1.23:3000". For real daily use, deploy the backend
 // somewhere always-on (Render/Railway free tier, etc.) and put that URL here.
-export const API_BASE_URL = "http://192.168.0.74:3000";
+export const API_BASE_URL = "https://chatwithclara.onrender.com";
 
 const client = axios.create({ baseURL: API_BASE_URL });
 
