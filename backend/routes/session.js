@@ -37,8 +37,14 @@ router.post("/turn", upload.single("audio"), async (req, res) => {
   const session = db.prepare("SELECT * FROM sessions WHERE id = ? AND user_id = ?").get(sessionId, req.userId);
   if (!session) return res.status(404).json({ error: "Session not found" });
 
+  // multer saves the upload with no file extension, but Groq's transcription
+  // API identifies the audio format from the filename extension. Rename it
+  // so it has one before sending it off.
+  const audioPathWithExt = `${req.file.path}.m4a`;
+  fs.renameSync(req.file.path, audioPathWithExt);
+
   try {
-    const userText = await transcribeAudio(req.file.path);
+    const userText = await transcribeAudio(audioPathWithExt);
 
     const priorTurns = db
       .prepare("SELECT role, text FROM turns WHERE session_id = ? ORDER BY id ASC")
@@ -60,7 +66,7 @@ router.post("/turn", upload.single("audio"), async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Something went wrong processing that turn" });
   } finally {
-    fs.unlink(req.file.path, () => {});
+    fs.unlink(audioPathWithExt, () => {});
   }
 });
 

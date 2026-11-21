@@ -39,7 +39,6 @@ laptop while it's on the same wifi as her phone.
 
 ```bash
 cd backend
-npm install
 npm start
 ```
 
